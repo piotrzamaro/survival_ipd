@@ -111,63 +111,7 @@ gbd_age %>%
 *Źródło:Opracowanie własne na podstawie badania GBD 2019*
 
 
-
-#r lek` 
-
 <p>&nbsp;</p>
-
-
-## **1. Krótka charakterystyka produktu**
- 
-** lek`** *(` substancja`)*  wskazanie`
-
-
-
-
-
-<p>&nbsp;</p>
-
-## **Schemat opisywania danych GBD w raportach TLI/TLK w części oceny niezaspokojonej potrzeby zdrowotnej**    
-
- 
-
-Produkt leczniczy **[lek]** stosuje się w terapii [rozpoznanie]. Zgodnie z badaniem GBD 2019, prowadzonym przez Institute for Health Metrics and Evaluation (IHME) przy Uniwersytecie Waszyngtońskim (Seattle, USA)  ten problem zdrowotny należy do kategorii [nazwa rozpoznania wg. GBD (ICD-10)]. W Polsce w 2019 roku z powodu tego rozpoznania odnotowano łącznie [liczba przypadków] nowych przypadków co stanowi [wskaźnik/100 tys. ludności], chorobowość związana z [nazwa rozpoznania wg. GBD] wynosiła odpowiednio [wskaźnik na 100 tys.] u obu płci.  
-
-Obciążenie chorobowe (tj. utrata zdrowia wynikająca z sumy lat utraconych w wyniku przedwczesnego zgonu oraz lat spędzonych z niesprawnością spowodowaną tą przyczyną)  w Polsce w 2019 roku wynosiło:   
-
-Wskaźnik łącznej utraty zdrowia DALY (Lata życia skorygowane niesprawnością; ang. Disability Adjusted Life-Years,), współczynnik na 100 tys.: 
-
-Ogółem: XXX; 
-
-Kobiety: XXX; 
-
-Mężczyźni: XXX; 
-
-W tym:  
-
-Utracone lata życia z powodu przedwczesnego (Utracone lata życia; ang. Years of Life Lost, YLL),, współczynnik na 100 tys.: 
-
-Ogółem: XXX; 
-
-Kobiety: XXX; 
-
-Mężczyźni: XXX; 
-
- 
-
-Wykres trendu dla DALY i YLL [do zbiorczego wygenerowania z bazy GBD2019]. 
-
-
-Wagi niesprawności: Tabela 
-
-
-Tabela dla wartości bezwzględnej DALY i YLL  
-
- 
-
-Wartości (bezwzględne) YLL oraz DALY szacowane dla roku 2019 dla pacjentów z [nazwa rozpoznania] 
-
-\pagebreak
 
 
 ## **Rekontrukcja indywidualnych danych pacjentów przy użyciu algorytmu iteracyjnego**
