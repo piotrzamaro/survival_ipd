@@ -1,0 +1,232 @@
+---
+title: ""
+author: "zamaro@outlook.com"
+output:
+  word_document:
+    reference_docx: "format.docx"
+    fig_caption: yes
+  pdf_document:
+    toc: true
+    highlight: zenburn
+  html_document:
+    toc: true
+    theme: united
+---
+
+```{r echo = F, collapse=T}
+
+#ipd <- read.csv2("IPD.csv")
+
+km <- analiza_km(ipd)
+hr <- analiza_hr(ipd)
+rm <- analiza_rmean(ipd)
+
+```
+
+
+**Wstęp**
+
+
+
+Zastosowana ścieżka analityczna obejmuje proces rekonstrukcji danych do poziomu pacjenta oraz wtórną analizę przeżycia na podstawie uzyskanych danych. W procesie rekonstrukcji wykorzystano algorytm iteracyjny poprawiający precyzję rekonstrukcji danych . 
+Uzyskane indywidualne dane pacjenta *(ang. IPD - indyvidual patient data)* posłużyły do oszacowania efektu zdrowotnego w postaci zyskanych lat życia *(LYG, life years gained)*. 
+W analizie odtworzono przebieg krzywych Kaplana-Meiera reprezentujących prawdopodobieństwo przeżycia wraz przedziałami ufności (95% CI) oraz oszacowano mediany czasu przeżycia pacjentów. 
+
+Wielkość efektu interwencji oceniono obliczając obszar pod przebiegiem odtworzonych krzywych Kaplana-Meiera. w efekcie czego uzyskano miary ograniczonych średnich: czasu przeżycia *(ang. restricted mean survival time, RMST)* oraz czasu utraconego *(ang. restricted mean time lost, RMTL).* 
+
+**Zastosowane narzędzia**
+
+Procedura odczytu i rekonstrukcji indywidualnych danych pacjenta przeprowadzono przy użyciu pakietu *IPDfromKM.* Jest to metoda odtworzenia pierwotnych danych na podstawie opublikowanych krzywych przeżycia Kaplana-Meiera. 
+Wtórną analizę przeżycia oraz wizualizację otrzymanych wyników przeprowadzono wykorzystując dodatkowo pakiet *survminer* oraz *survival*.
+Analizę pola pod zrekonstruowanymi krzywymi KM przeprowadzono korzystając z pakietu *survRM2* służącego do porównania ograniczonych średnich czasów przeżycia pomiędzy ramionami badania.
+
+**Wykres 1. Wykres źródłowy przedstawiający pierwotny przebieg krzywych Kaplana-Meiera**
+
+![](image.png)   
+*Źródło: Opracowanie własne na podstawie danych zrekonstruowanych przy użyciu pakietu IPDfromKM*
+
+
+<p>&nbsp;</p>
+
+
+## **1. Procedura rekonstrukcji danych**
+
+Procedurę odczytu i odwzorowania przebiegu krzywych przeżycia Kaplana-Meiera oraz analizy z niej wynikające przeprowadzono na podstawie opublikowanego wykresu źródłowego. Wykres przedstawia dwa ramiona badania w schemacie: `r arm0` *(arm 1)* i `r arm1` *(arm2)*. Źródłem wykresu jest `r source`.
+Procedura odczytu i rekonstrukcji indywidualnych danych pacjenta przeprowadzono przy użyciu pakietu _IPDfromKM_. Jest to metoda odtworzenia pierwotnych danych na podstawie opublikowanych krzywych przeżycia KM. Pakiet zawiera algorytm iteracyjny poprawiający proces odtwarzania danych. W procedurze odczytu współrzędnych i rekonstrukcji danych na poziomie pacjenta miały miejsce poniższe etapy:
+
+1. Ekstrakcja współrzędnych punktów z krzywych przeżycia Kaplana-Meiera
+2. Wstępne przetwarzanie odczytanych współrzędnych
+3. Rekonstrukcja indywidualnych danych pacjentów
+ 
+ <p>&nbsp;</p>
+
+
+### **1.1 Ekstrakcja współrzędnych i wstępne przetwarzanie odczytanych danych**
+
+Wykres źródłowy został zaimportowany do środowiska R funkcją *getpoints()*. Jako argumenty funkcji wprowadzono odczytane z wykresu wartości maksymalne i minimalne dla osi x i y. Następnie zdefiniowano dwa obiekty reprezentujące krzywe przeżycia nadając im nazwy zgodne z zastosowanym schematem leczenia. W wyniku zastosowania funkcji obraz w postaci wykresu z krzywymi KM został wczytany do okna wykresów w celu ręcznego oznaczenia współrzędnych punktów przebiegu krzywych przeżycia. Dla każdej z krzywych przeżycia oznaczono wartości minimalne i maksymalne osi x i y oraz współrzędne punktów poprzez kliknięcia na krzywej, dążąc do oznaczenia wszystkich punktów załamania krzywej. 
+Do wstępnego przetwarzania danych wykorzystano funkcję *preprocess()*. Dla zdefiniowanych wcześniej obiektów wprowadzono ręcznie dane dotyczące interwałów czasowych przedstawionych na osi y oraz dane dotyczące liczby pacjentów w zagrożeniu dla każdego interwału oraz początkową liczbę pacjentów, liczbę pacjentów  w zagrożeniu oraz początkową liczbę pacjentów - `r nrisk_arm0[1]` dla grupy `r label_arm0` oraz `r nrisk_arm1[1]`  dla grupy `r label_arm1`
+
+<p>&nbsp;</p>
+
+### **1.2 Rekonstrukcja indywidualnych danych pacjentów**
+
+Rekonstrukcja pierwotnych danych odbyła się z wykorzystaniem funkcji *getIPD()*. Funkcja wykorzystuje algorytm iteracyjny wpływający korzystnie na precyzję odtworzenia uzyskanych danych. W wyniku zastosowania funkcji uzyskano zrekonstruowane dane IPD przedstawiające oszacowane prawdopodobieństwo przeżycia na poziomie jednego pacjenta. Zbiór tworzą zmienne *surv* i *time* przedstawiające odpowiednio prawdopodobieństwo i czas wystąpienia zdarzenia
+
+<p>&nbsp;</p>
+
+
+### **1.3 Ocena dokładności rekonstrukcji danych**
+
+W celu oceny dokładności procesu rekonstrukcji przeprowadzono test Kołmogorowa-Smirnowa. Zastosowany test dla dwóch prób jest nieparametrycznym testem oceniającym zgodność badanego rozkładu z rozkładem referencyjnym.
+Obliczono pierwiastkowy błąd średniokwadratowy (ang. RMSE, Root Mean Squared Error), średni błąd bezwzględny (ang. MAE, mean absolute error) i maksymalny błąd bezwzględny (ang. max absolute error), mierzące różnice między oszacowanym i odczytanym prawdopodobieństwem przeżycia. Pierwiastkowy błąd średniokwadratowy oraz średni błąd bezwzględny informuje o wielkości zachodzących różnic pomiędzy testowanymi rozkładami. Wartości bliższe zeru są bardziej skoncentrowane wokół wartości wynikających z rzeczywistego rozkładu.
+
+Hipotezy testu Kołomogorowa-Smirnowa
+
+1. H^0^ - pomiędzy rozkładami nie zachodzą różnice
+2. H^1^ - brak istotnych różnic pomiędzy rozkładami
+
+<p>&nbsp;</p>
+
+
+**Tabela 1. Statystyki testu Kołomogorowa-Smirnowa, pierwiastkowy błąd średniokwadratowy oraz miary błędu absolutnego dla badanych rozkładów**
+```{r echo = F, eval=F, collapse=T,tab.cap="ddd"}
+read.csv2("estim_table.csv") %>%
+    knitr::kable()
+```
+
+*Źródło: Opracowanie własne na podstawie danych zrekonstruowanych przy użyciu pakietu IPDfromKM*
+
+
+## **2. Analiza przeżycia**
+
+
+### **2.1 Krzywe przeżycia Kaplana-Meiera**
+
+<p>&nbsp;</p>
+
+
+Na podstawie odtworzonych danych na poziomie pacjentów utworzono dwa wykresy prezentujące krzywe przeżycia Kaplana-Meiera. W stosunku do wykresu źródłowego nowo otrzymano estymację przedziałową z oszacowanymi 95-procentowymi przedziałami ufności.
+Do oceny różnic w oszacowanym czasie przeżycia pomiędzy ramionami badania zastosowano test log-rank służący do porównania rozkładu czasu do wystąpienia zdarzenia będącego przedmiotem zainteresowania w niezależnych grupach \footnote{The Value of BCG and TNF in Autoimmunity (Second Edition). Romano S. 2018}. 
+
+Hipotezy dla testu log-rank:
+
+1. H^0^: brak różnic w rozkładzie przeżycia 
+2. H^1^: pomiędzy rozkładami zachodzą istotne różnice
+
+
+Wynik testu log-rank był `r ifelse(km$logrank_km > 0.05, "wyższy", "niższy")` niż 0.05. Oznacza to, że `r ifelse(km$logrank_km < 0.05, "nie ma dowodów by przyjąć hipotezę zerową stanowiącą o braku różnic pomiędzy rozkładami.","nie ma dowodów by odrzucić hipotezę zerową stanowiącą o braku różnic pomiędzy rozkładami.")` Inaczej mówiąc, pomiędzy rozkładami `r ifelse(km$logrank_km > 0.05, "nie zachodzą istotne różnice", "zachodzą istotne różnice")`.
+
+
+**Wykres 2. Krzywe przeżycia Kaplana-Meiera oszacowane na podstawie zrekonstruowanych danych IPD**
+
+
+```{r echo=F, eval=T, collapse=T, fig.width=10, fig.height=6}
+km$km_plot
+```
+*Źródło: Opracowanie własne na podstawie danych zrekonstruowanych przy użyciu pakietu IPDfromKM*
+
+
+<p>&nbsp;</p>
+
+
+Czas przeżycia określa czas przeżycia mierzony od punktu początkowego do momentu wystąpienia zdarzenia lub zakończenia badania. 
+Różnica w medianie przeżycia pomiędzy uzyskanymi rozkładami wyniosła `r diff(km$km_table$median)*1` i była wyższa wśród pacjentów w grupie `r ifelse(km$km_table$median[1] > km$km_table$median[2], 0,1)`. 
+
+**Tabela. Podsumowanie modelu uzyskanego na podstawie danych uzyskanych w procecie rekonstrukcji**
+
+```{r echo = F}
+knitr::kable(km$km_table)
+```
+*Źródło: Opracowanie własne na podstawie danych zrekonstruowanych przy użyciu pakietu IPDfromKM*
+
+
+**Tabela. Czas przeżycia dla trzeciego, drugiego i pierwszego kwartylu pacjentów**
+```{r echo = F, eval = F, message=F, warning=F}
+knitr::kable(survtime, digits = 2, format = "pipe")
+```
+*Źródło: Opracowanie własne na podstawie danych zrekonstruowanych przy użyciu pakietu IPDfromKM*
+
+
+### **2.2 Model proporcjonalnego hazardu Coxa**
+
+Ryzyko zgonu jest prawdopodobieństwem wystąpienia zdarzenia u pacjenta, który przeżył do końca obserwacji. Model proporcjonalnego hazardu Coxa określa stosunek częstości zgonów pomiędzy grupami w danym czasie wystąpienia zdarzenia zależnego jest od zmiennych objaśniających. W celu oceny wpływu ocenianej interwencji na prawdopodobieństwo wystąpienia zgonu na podstawie zrekonstruowanych danych oszacowano współczynik ryzyka w postaci proporcjonalnego hazardu *(HR - hazard ratio)*. 
+
+Założenia proporcjonalnego hazardu Coxa:
+
+1. HR = 1: brak różnic pomiędzy rozkładami
+2. HR <1: zmniejszenie zagrożenia
+3. HR> 1: wzrost zagrożenia
+
+
+**Tabela. Proporcjonalny hazard oszacowany na podstawie zrekonstruowanych danych**
+
+```{r echo=F, eval=T, collapse=T, fig.width=10, fig.height=4}
+knitr::kable(hr$hr_table)
+```
+*Źródło: Opracowanie własne na podstawie danych zrekonstruowanych przy użyciu pakietu IPDfromKM*
+
+
+<p>&nbsp;</p>
+
+Proporcjonalny hazard stanowi o stosunku zagrożenia pomiędzy ocenianą interwencją, a komparatorem. Wartość hazardu względnego poniżej 1 wskazuje na zmniejszone ryzyko wystąpienia zgonu, natomiast wartość powyżej 1 informuje o wzroście ryzyka. 
+HR na poziomie `r hr$hr_table[1,5]` oznacza, że prawdopodobieństwo wystąpienia zgonu względem ramienia 0 jest `r hr$hr_table[1,2]` razy `r ifelse(hr$hr_table[1,2] < 1, "niższe", "wyższe")` na jednostkę czasu w grupie referencyjnej. Inaczej mówiąc, zastosowanie ocenianej interwencji `r ifelse(hr$hr_table[1,2] < 1, "zmniejsza", "zwiększa")` ryzyko zgonu o `r ifelse(hr$hr_table[1,2] < 1, 100-hr$hr_table[1,2]*100, (100-hr$hr_table[1,2]*100) * -1)`%.
+
+Globalną istotność modelu Coxa przetestowano korzystając z testu Walda, statystyki log-rank oraz testując współczynnik wiarygodności *(likelihood test)*. Test globalny jest testem dobroci dopasowania chi-kwadrat badającym grupę zmiennych niezależnych w kierunku obecności relacji ze zmienną zależną. Zastosowane testy są synoptycznie równoważne. W zależności od liczebności badanej populacji uzyskane wyniki powinny być zbliżone.
+
+Hipotezy globalnego testu:
+
+1. H^0^: pomiędzy testowanymi rozkładami zachodzi proporcjonalny hazard
+2. H^1^: brak proporcjonalnego hazardu pomiędzy rozkładami 
+
+W wyniku przeprowadzonego testu uzyskano wartość `r ifelse(hr$hr_table[1,5] > 0.05, "większą", "mniejszą")` niż 0.05. Oznacza to, że model `r ifelse(hr$hr_table[1,5] > 0.05, "nie spełnia założeń o proporcjonalnym hazardzie", "spełnia założenia proporcjonalnego rozkładu")`.
+
+
+**Wykres. Krzywe skumulowanego hazardu oszacowane na podstawie zrekonstruowanych danych IPD**
+```{r echo=F, eval=T, collapse=T, fig.width=10, fig.height=5, collapse=T}
+hr$cumhaz_plot
+```
+*Źródło: Opracowanie własne na podstawie danych zrekonstruowanych przy użyciu pakietu IPDfromKM*
+
+### **2.3 Pole pod krzywymi Kaplana-Meiera**
+
+Ograniczony średni czas przeżycia (RMST) jest miarą oszacowania efektu leczenia. W odróżnieniu od stopy hazardu, która jest wskaźnikiem relatywnym, ograniczona średnia szacuje czas przeżycia dla całego rozkładu. Mierzy ona średni czas przeżycia od początku obserwacji do określonego punktu definiowanego jako czas obcięcia *(truncation time, tau)*.  Ograniczony średni czas przeżycia definiuje pole znajdujące się poniżej krzywej przeżycia Kaplana-Meiera, natomiast obszar powyżej krzywej reprezentuje ograniczony średni czas utracony (RMTL).
+Ograniczony średni czas przeżycia można interpretować jako średni czas przeżycia wolny od zdarzeń do określonego punktu czasowego *tau*. Czas obcięcia prezentuje mniejsze niż minimum największego obserwowanego czasu w każdej z dwóch grup wynoszący `r round(rm$tau,1)`. 
+
+**Wykres. Ograniczone średnie czasy przeżycia (RMST) oszacowane na podstawie zrekonstruowanych danych**
+
+```{r echo=F, eval=T, collapse=T, fig.width=10, fig.height=5, collapse=T}
+plot(rm$rmean, 
+     xlab="Czas w miesiącach",             
+     ylab="Prawdopodobieństwo przeżycia",
+     col = "lightgrey",
+     col.RMST = "darkslategray4",
+     col.RMTL = "steelblue",
+     density = 75,
+     angle = 10)
+```
+*Źródło: Opracowanie własne na podstawie danych zrekonstruowanych przy użyciu pakietu IPDfromKM*
+
+<p>&nbsp;</p>
+
+RMST określa średni czas wolny od zdarzeń wśród pacjentów w grupie leczonej do określonego punktu czasowego *(tau)*. Oznacza wzrost lub utratę czasu przeżycia wolnego od zdarzenia względem grupy kontrolnej. RMST dostarcza dodatkowej miary skuteczności leczenia, którą można opisać jako liczbę jednostek czasu życia uzyskanych dzięki leczeniu. 
+RMTL to obszar powyżej krzywej Kaplana-Meiera, średni czas po zdarzeniu w całym okresie obserwacji. Przedstawia czas utracony do ustalonego czasu obcięcia. Ograniczony średni czas przeżycia był wyższy w grupie `r ifelse(rm$rmst_table[1]>rm$rmst_table[2],0,1)` i wyniósł `r round(ifelse(rm$rmst_table[1]>rm$rmst_table[2],rm$rmst_table[1],rm$rmst_table[2]),1)`.
+
+**Tabela. Wartość RMST oraz RMTL**
+```{r echo = F}
+knitr::kable(rm$rmean_table)
+```
+*Źródło: Opracowanie własne na podstawie danych zrekonstruowanych przy użyciu pakietu IPDfromKM*
+
+<p>&nbsp;</p>
+
+Wielkość efektu interwencji stanowi różnicę pomiędzy średnim czasem przeżycia pomiędzy dwoma badanymi grupami. Różnica RMST wyniosła `r round(rm$rmean_diff[1,1],1)`. 
+
+Stosunek RMTL między leczonymi grupami przedstawia utracony czas przeżycia do określonego punktu czasowego. RMTL określa efekty leczenia bez konieczności spełnienia założeń o proporcjonalności zagrożenia przez cały okres badania. Stosunek RMTL uzyskano dzieląc RMTL pomiędzy ramionami.
+Stosunek RMTL ramienia 1 względem ramienia referencyjnego wyniósł `r round(rm$rmean_diff[3,1],2)`
+
+
+**Tabela. Różnica oraz stosunek ograniczonych średnich czasów pomiędzy grupami**
+```{r echo = F}
+knitr::kable(rm$rmean_diff, digits = 2)
+```
+*Źródło: Opracowanie własne na podstawie danych zrekonstruowanych przy użyciu pakietu IPDfromKM*
