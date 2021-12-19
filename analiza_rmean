@@ -1,0 +1,38 @@
+analiza_rmean <- function(ipd)
+{
+
+  ipd <- ipd %>%
+    mutate(ref = ifelse(ipd$treat == 1,1,0))
+
+  rmean <-rmst2(time = ipd$time, status = ipd$status, ipd$arm)
+  ref_arm0 <- rmean$unadjusted.result
+  colnames(ref_arm0) <-  c("Time", "0.95LCI", "0.95UCI", "p-value")
+
+  rmst_table <- data.frame(rmean$RMST.arm0$rmst, rmean$RMST.arm1$rmst) %>%
+    t()
+  colnames(rmst_table) <- c("RMST", "SE", "0.95LCI", "0.95UCI")
+  row.names(rmst_table) <- c("arm0", "arm1")
+
+  rmtl_table <- data.frame(rmean$RMST.arm0$rmtl, rmean$RMST.arm1$rmtl) %>%
+    t()
+  colnames(rmtl_table) <- c("RMTL", "SE", "0.95LCI", "0.95UCI")
+  row.names(rmtl_table) <- c("arm0", "arm1")
+  rmean_table <- cbind(rmst_table, rmtl_table) %>%
+    round(2)
+
+  rmean_ref0 <-rmst2(time = ipd$time, status = ipd$status, ipd$ref)
+  ref_arm1 <- data.frame(rmean_ref0$unadjusted.result)
+  rownames(ref_arm1) <- c("RMST (arm=0)-(arm=1)", "RMST (arm=0)/(arm=1)", "RMTL (arm=0)/(arm=1)")
+  colnames(ref_arm1) <- c("Time", "0.95LCI", "0.95UCI", "p-value")
+
+  rmean_diff <- rbind(ref_arm1, ref_arm0)
+
+
+  return(list(
+    rmean = rmean,
+    tau =   rmean$tau,
+    rmst_table = rmst_table,
+    rmtl_table = rmtl_table,
+    rmean_table = rmean_table,
+    rmean_diff = rmean_diff))
+}
