@@ -1,0 +1,26 @@
+min_x = 0	 	                                            #wstaw minimalnÄ… wartoĹ›Ä‡ osi x
+max_x = 45	                                            #wstaw maksymalnÄ… wartoĹ›Ä‡ osi x
+min_y = 0		                                            #wstaw minimalnÄ… wartoĹ›Ä‡ osi y
+max_y = 100		                                          #wstaw minimalnÄ… wartoĹ›Ä‡ osi y
+time_risk =  seq(0,45,3)                                #wstaw interwaĹ‚y czasu dla pacjentĂłw naraĹĽonych na ryzyko
+nrisk_arm0 = c(396,341,295,264,244,212,190,165,153,145,129,91,41,9,1,0)		          #wstaw liczbÄ™ pacjentĂłw naraĹĽonych na ryzyko dla 1 ramienia
+nrisk_arm1 = c(397,358,306,250,218,190,166,141,126,112,93,57,22,6,1,0)	#wstaw liczbÄ™ pacjentĂłw naraĹĽonych na ryzyko dla 2 ramienia
+interval = 6 	                                          #wstaw interwaĹ‚ czasowy, w jakim chcesz otrzymaÄ‡ oszacowane prawdopodobieĹ„stwo przeĹĽycia
+quantile = c(0.75,0.5,0.25)	                            #wstaw udziaĹ‚ pacjentĂłw, dla ktĂłrych chcesz otrzymaÄ‡ czas przeĹĽycia
+arms = 2			                                          #wstaw liczbÄ™ ramion w badaniu (maks. 2 ramiona)
+
+#Krok 1: WprowadĹş etykiety
+
+arm0 = "Nivolumab + ipilimumab"					                          #wstaw opis schematu interwencji
+arm1 = "Chemotherapia"				                            #wstaw opis schematu komparatora
+label_arm0 = arm0	                            #wstaw etykietÄ™ ramienia zgodnÄ… ze schematem interwencji
+label_arm1 = arm1	                          #wstaw etykietÄ™ ramienia zgodnÄ… ze schematem komparatora
+source = "The New England Journal of Medicine"
+
+source("rekonstrukcja_ipd.R", local = knitr::knit_global())
+source("analiza_km.R", local = knitr::knit_global())
+source("analiza_hr.R", local = knitr::knit_global())
+source("analiza_rm.R", local = knitr::knit_global())
+
+rmarkdown::render('survival_raport.Rmd', output_file = "raport", output_format = 'all')
+
