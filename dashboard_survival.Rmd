@@ -1,0 +1,404 @@
+---
+title: "Analiza przeżycia"
+output: flexdashboard::flex_dashboard
+runtime: shiny
+---
+
+```{r global, include=FALSE}
+# load data in 'global' chunk so it can be shared by all users of the dashboard
+library(datasets)
+library(xlsx)
+library(survminer)
+library(shinydashboard)
+library(IPDfromKM)
+library(survminer)
+library(survival)
+library(plotly)
+library(ggplot2)
+library(shiny)
+library(dplyr)
+library(survRM2)
+library(downloadthis)
+library(data.table)
+library(readxl)
+
+
+data(faithful)
+
+
+data <- read_excel("ipd.xlsx")
+```
+
+
+Wstęp
+=========================================
+
+
+Metodyka
+=========================================
+
+
+Wprowadź dane
+=========================================
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+Wczytaj dane do przeprowadzenia analizy przeżycia
+
+```{r}
+
+fileInput("file1", "Wczytaj dane", 
+                              accept = ".xlsx")
+
+selectInput("n_breaks", label = "Number of bins:",
+            choices = c(10, 20, 35, 50), selected = 20)
+
+sliderInput("bw_adjust", label = "Bandwidth adjustment:",
+            min = 0.2, max = 2, value = 1, step = 0.2)
+```
+
+Column
+-----------------------------------------------------------------------
+### **Instrukcja**
+
+```{r}
+data <- read_excel("ipd.xlsx")
+data  %>%
+  download_this(
+    output_name = "survival",
+    output_extension = ".xlsx",
+    button_label = "Pobierz przykładowy zbiór danych",
+    button_type = "primary",
+    has_icon = TRUE,
+    icon = "fa fa-save"
+  )
+```
+
+
+Column
+-----------------------------------------------------------------------
+### **Wprowadzone dane wejściowe**
+
+```{r}
+renderTable({
+  
+ipd1 <- input$file1$datapath
+
+ipd <-  readxl::read_excel(ipd1)
+ 
+ipd
+  
+})
+```
+
+Analiza KM
+=========================================
+
+Column
+-----------------------------------------------------------------------
+### **Metodyka**
+
+
+
+**Mediana czasu przeżycia** jest punktem czasowym, w którym prawdopodobieństwo przeżycia wynosi 50%. Inaczej mówiąc, przedstawia czas, w którym zgon lub progresja choroby nastąpiła u połowy pacjentów.
+
+Mediana szacuje parametr **w określonym punkcie czasowym.**
+
+
+```{r}
+renderTable({
+  
+ipd1 <- input$file1$datapath
+
+ipd <-  readxl::read_excel(ipd1)
+ 
+head(ipd)
+dane <- as.data.frame(ipd)
+
+dane
+
+fit_km <-  surv_fit(Surv(time, status) ~ group, data = dane)
+km_table  <- surv_median(fit_km)
+km_table$median <- round(km_table$median,1)
+km_table$lower <- round(km_table$lower,1)
+km_table$upper <- round(km_table$upper,2)
+colnames(km_table) <- c("Grupa", "Mediana", "LCI 0.95", "UCI 0.95")
+
+km_table
+
+})
+
+
+```
+
+
+
+
+### **Cumulative Hazard**
+
+
+```{r}
+
+renderPlot({
+  
+ipd1 <- input$file1$datapath
+
+ipd <-  readxl::read_excel(ipd1)
+ 
+head(ipd)
+dane <- as.data.frame(ipd)
+
+dane
+
+  fit_km <-  surv_fit(Surv(time, status) ~ group, data = dane)
+  
+  
+ggsurvplot(fit_km,
+                          fun = "cumhaz",
+                          data=ipd, 
+                          pval = F, 
+                          pval.method = T,
+                          conf.int = TRUE,
+                          conf.int.style = "step",
+                          ggtheme = theme_pubclean(),
+                          surv.median.line = "hv")
+    
+})
+```
+
+
+### **Cumulative events**
+
+```{r}
+
+renderPlot({
+  
+ipd1 <- input$file1$datapath
+
+ipd <-  readxl::read_excel(ipd1)
+ 
+head(ipd)
+dane <- as.data.frame(ipd)
+
+dane
+
+  fit_km <-  surv_fit(Surv(time, status) ~ group, data = dane)
+  
+  
+ggsurvplot(fit_km,
+                          fun = "event",
+                          data=ipd, 
+                          pval = F, 
+                          pval.method = T,
+                          conf.int = TRUE,
+                          conf.int.style = "step",
+                          ggtheme = theme_pubclean(),
+                          surv.median.line = "hv")
+})
+```
+
+
+Column
+-----------------------------------------------------------------------
+
+
+### **Krzywe KM**
+
+```{r error=F}
+
+renderPlot({
+  
+ipd1 <- input$file1$datapath
+
+ipd <-  readxl::read_excel(ipd1)
+ 
+head(ipd)
+dane <- as.data.frame(ipd)
+
+dane
+
+  fit_km <-  surv_fit(Surv(time, status) ~ group, data = dane)
+  
+  
+ggsurvplot(fit_km,
+                      data=ipd, 
+                      pval = TRUE,
+                      pval.method = T,
+                      conf.int = TRUE,
+                      conf.int.style = "step",
+                      ggtheme = theme_pubclean(),
+                      surv.median.line = "hv",
+                      risk.table = T)
+    
+})
+```
+
+### **Medianowy czas przeżycia**
+
+
+```{r error=F}
+renderTable({
+  
+ipd1 <- input$file1$datapath
+
+ipd <-  readxl::read_excel(ipd1)
+ 
+head(ipd)
+dane <- as.data.frame(ipd)
+
+dane
+
+fit_km <-  surv_fit(Surv(time, status) ~ group, data = dane)
+km_table  <- surv_median(fit_km)
+km_table$median <- round(km_table$median,1)
+km_table$lower <- round(km_table$lower,1)
+km_table$upper <- round(km_table$upper,2)
+colnames(km_table) <- c("Grupa", "Mediana", "LCI 0.95", "UCI 0.95")
+
+km_table
+
+    
+
+})
+
+```
+
+
+
+Analiza RMST
+=========================================
+
+
+Column
+-----------------------------------------------------------------------
+### Metodyka
+
+```{r}
+renderText({
+
+ipd1 <- input$file1$datapath
+
+ipd <-  readxl::read_excel(ipd1)
+ 
+  
+rm_table <- rmst2(time = ipd$time, status = ipd$status, ipd$arm) 
+tau = round(rm_table$tau,1)
+
+paste0("Punkt odcięcia", tau)
+
+})
+```
+
+### Obszar pól pod krzywymi KM
+```{r}
+renderPlot({
+    
+ipd1 <- input$file1$datapath
+
+ipd <-  readxl::read_excel(ipd1)
+    rmst2(time = ipd$time, status = ipd$status, ipd$arm) %>%
+      plot(
+        xlab = "Time",
+        ylab = "Survival",
+        col = "black",
+        col.RMST = "#2E9FDF",
+        col.RMTL = "#E7B800",
+        density = 80,
+        angle = 85)
+})
+
+```
+
+
+Column
+-----------------------------------------------------------------------
+### **RMST**
+
+```{r}
+
+renderTable({
+ipd1 <- input$file1$datapath
+
+ipd <-  readxl::read_excel(ipd1)
+ 
+  
+rm_table <- rmst2(time = ipd$time, status = ipd$status, ipd$arm) 
+
+RMST_arm0 <- rm_table$RMST.arm0$rmst %>%
+  round(1)
+RMST_arm1 <- rm_table$RMST.arm1$rmst %>%
+  round(1)
+
+rbind(RMST_arm0, RMST_arm1)
+})
+
+```
+
+**Interpretacja**
+
+### **RMTL**
+
+```{r}
+renderTable({
+ipd1 <- input$file1$datapath
+
+ipd <-  readxl::read_excel(ipd1)
+ 
+  
+rm_table <- rmst2(time = ipd$time, status = ipd$status, ipd$arm) 
+RMST_arm0 <- rm_table$RMST.arm0$rmtl %>%
+  round(1)
+RMST_arm1 <- rm_table$RMST.arm1$rmtl %>%
+  round(1)
+rbind(RMST_arm0, RMST_arm1)
+})
+```
+
+### **Wielkość efektu**
+
+
+```{r}
+
+renderTable({
+ipd1 <- input$file1$datapath
+
+ipd <-  readxl::read_excel(ipd1)
+ 
+  
+rm_table <- rmst2(time = ipd$time, status = ipd$status, ipd$arm) 
+rm_table$unadjusted.result %>%
+  round(2)
+})
+
+```
+
+
+
+Literatura
+=========================================
+
+
+- Na Liu, Yanhong Zhou, J. Jack Lee. IPDfromKM: Reconstruct Individual Patient Data from Published Kaplan-Meier Survival Curves - https://www.researchsquare.com/article/rs-117525/v1
+
+- P. Guyot, AE. Ades, M. JNM. Ouwens, N. J.Welton. Enhanced secondary analysis of survival data: reconstructing the data from published Kaplan-Meier survival curves - https://pubmed.ncbi.nlm.nih.gov/22297116/
+
+- R. Perry, M. Taylor, L. Lewis, A. Yellowlees, K. Fleetwood, T. Barata. Estimating Survival Data from Published Kaplan-Meier Curves: a Comparison of Methods - 
+https://pubmed.ncbi.nlm.nih.gov/27200548/
+
+
+### **Podsumowanie modelu**
+
+```{r}
+
+renderPrint({
+ipd1 <- input$file1$datapath
+
+ipd <-  readxl::read_excel(ipd1)
+ 
+  
+     rmst2(time = ipd$time, status = ipd$status, ipd$arm) 
+
+})
+
+
